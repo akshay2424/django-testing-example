@@ -5,10 +5,13 @@ from django.views.generic import CreateView
 from django.utils.text import slugify
 from .forms import ExpenseForm
 import json
+from accounts.models import User
+
 
 def project_list(request):
     project_list = Project.objects.all()
     return render(request, 'budget/project-list.html', {'project_list': project_list})
+
 
 def project_detail(request, project_slug):
     project = get_object_or_404(Project, slug=project_slug)
@@ -25,7 +28,8 @@ def project_detail(request, project_slug):
             amount = form.cleaned_data['amount']
             category_name = form.cleaned_data['category']
 
-            category = get_object_or_404(Category, project=project, name=category_name)
+            category = get_object_or_404(
+                Category, project=project, name=category_name)
 
             Expense.objects.create(
                 project=project,
@@ -35,11 +39,15 @@ def project_detail(request, project_slug):
             )
 
     elif request.method == 'DELETE':
-        id = json.loads(request.body)['id']
-        expense = Expense.objects.get(id=id)
-        expense.delete()
+        try:
 
-        return HttpResponse(status=204)
+            id = json.loads(request.body)['id']
+            expense = Expense.objects.get(id=id)
+            expense.delete()
+
+            return HttpResponse(status=204)
+        except:
+            return HttpResponse(status=404)
 
     return redirect(project)
 
